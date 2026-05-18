@@ -1,7 +1,7 @@
-import { GeminiTaskInput, PiApiCreateTaskResponse } from "@/lib/types";
+import { SeedreamTaskInput, PiApiCreateTaskResponse } from "@/lib/types";
 
-export async function createGeminiImageTask(
-  input: GeminiTaskInput,
+export async function createSeedreamImageTask(
+  input: SeedreamTaskInput,
 ): Promise<{ taskId: string; raw: PiApiCreateTaskResponse }> {
   const apiKey = process.env.PIAPI_KEY;
 
@@ -16,13 +16,14 @@ export async function createGeminiImageTask(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "gemini",
-      task_type: "gemini-2.5-flash-image",
+      model: "seedream",
+      task_type: "seedream-5-lite",
       input: {
         prompt: input.prompt,
-        image_urls: input.image_urls ?? [],
+        ...(input.image_urls?.length ? { image_urls: input.image_urls } : {}),
         aspect_ratio: input.aspect_ratio ?? "1:1",
         output_format: input.output_format ?? "png",
+        size: input.size ?? "2K",
       },
       config: {
         service_mode: "public",

@@ -62,23 +62,115 @@ function AttributeRow({ attr }: { attr: Attribute }) {
   );
 }
 
-export default function GenerationCard({
+function GenerationCardItem({
   generation,
-  tab,
-  page,
-  total,
+  isPending,
 }: {
-  generation: Generation | null;
-  tab: string;
-  page: number;
-  total: number;
+  generation: Generation;
+  isPending: boolean;
 }) {
   const acceptMutation = useAcceptGeneration();
   const rejectMutation = useRejectGeneration();
   const removeMutation = useRemoveGeneration();
-  const isPending = acceptMutation.isPending || rejectMutation.isPending || removeMutation.isPending;
+  const itemPending = isPending || acceptMutation.isPending || rejectMutation.isPending || removeMutation.isPending;
 
-  if (total === 0 || !generation) {
+  const handleAccept = () => acceptMutation.mutate(generation.id);
+  const handleReject = () => rejectMutation.mutate(generation.id);
+  const handleRemove = () => removeMutation.mutate(generation.id);
+
+  return (
+    <div
+      className={`w-full bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden transition-opacity ${itemPending ? "opacity-60" : ""}`}
+    >
+      <ImagePairFull
+        sourceUrl={generation.source_image_url}
+        resultUrl={generation.image_url}
+        status={generation.status}
+      />
+
+      {/* Body */}
+      <div className="p-6 space-y-6">
+        {/* Actions */}
+        <div className="flex justify-end pb-6 border-b border-gray-100 dark:border-gray-800">
+          <GenerationActions
+            generation={generation}
+            isPending={itemPending}
+            onAccept={handleAccept}
+            onReject={handleReject}
+            onRemove={handleRemove}
+          />
+        </div>
+
+        {/* Attributes */}
+        <div>
+          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+            Attributes
+          </h3>
+          <div className="overflow-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+                <tr>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Target</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Change</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Material</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-900">
+                {generation.attributes.map((attr, i) => (
+                  <AttributeRow key={i} attr={attr} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Metadata grid */}
+        <div>
+          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+            Details
+          </h3>
+          <dl className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <MetaItem label="Product ID" value={String(generation.product_id)} />
+            <MetaItem label="Status" value={generation.status} />
+            <MetaItem
+              label="Provider Status"
+              value={generation.provider_status ?? "—"}
+            />
+            <MetaItem
+              label="Retry Count"
+              value={String(generation.retry_count)}
+            />
+            <MetaItem
+              label="Created"
+              value={formatDate(generation.created_at)}
+            />
+            <MetaItem
+              label="Updated"
+              value={formatDate(generation.updated_at)}
+            />
+          </dl>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function GenerationCard({
+  generations,
+  tab,
+  page,
+  total,
+  pageSize,
+}: {
+  generations: Generation[];
+  tab: string;
+  page: number;
+  total: number;
+  pageSize: number;
+}) {
+  const totalPages = Math.ceil(total / pageSize);
+
+  if (total === 0 || generations.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-56 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 text-gray-400 text-sm gap-2">
         <span className="text-3xl">✓</span>
@@ -87,117 +179,44 @@ export default function GenerationCard({
     );
   }
 
-  const handleAccept = () => acceptMutation.mutate(generation.id);
-  const handleReject = () => rejectMutation.mutate(generation.id);
-  const handleRemove = () => removeMutation.mutate(generation.id);
+  const firstItem = page * pageSize + 1;
+  const lastItem = Math.min(page * pageSize + generations.length, total);
 
   return (
     <div className="w-full space-y-4">
       {/* Pagination bar */}
       <div className="flex items-center justify-between">
         <span className="text-sm text-gray-500">
-          {page + 1} / {total}
+          {firstItem}–{lastItem} / {total}
         </span>
         <div className="flex gap-2">
           <Link
             href={`/protected/${tab}/${page - 1}`}
             aria-disabled={page === 0}
-            className={`px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
-              page === 0
+            className={`px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${page === 0
                 ? "opacity-30 pointer-events-none border-gray-200 dark:border-gray-800"
                 : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
-            }`}
+              }`}
           >
             ← Prev
           </Link>
           <Link
             href={`/protected/${tab}/${page + 1}`}
-            aria-disabled={page >= total - 1}
-            className={`px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
-              page >= total - 1
+            aria-disabled={page >= totalPages - 1}
+            className={`px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${page >= totalPages - 1
                 ? "opacity-30 pointer-events-none border-gray-200 dark:border-gray-800"
                 : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
-            }`}
+              }`}
           >
             Next →
           </Link>
         </div>
       </div>
 
-      {/* Main card */}
-      <div
-        className={`w-full bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden transition-opacity ${isPending ? "opacity-60" : ""}`}
-      >
-        <ImagePairFull
-          sourceUrl={generation.source_image_url}
-          resultUrl={generation.image_url}
-          status={generation.status}
-        />
-
-        {/* Body */}
-        <div className="p-6 space-y-6">
-          {/* Actions */}
-          <div className="flex justify-end pb-6 border-b border-gray-100 dark:border-gray-800">
-            <GenerationActions
-              generation={generation}
-              isPending={isPending}
-              onAccept={handleAccept}
-              onReject={handleReject}
-              onRemove={handleRemove}
-            />
-          </div>
-
-          {/* Attributes */}
-          <div>
-            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-              Attributes
-            </h3>
-            <div className="overflow-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-                  <tr>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Target</th>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Change</th>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Material</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-gray-900">
-                  {generation.attributes.map((attr, i) => (
-                    <AttributeRow key={i} attr={attr} />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Metadata grid */}
-          <div>
-            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-              Details
-            </h3>
-            <dl className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              <MetaItem label="Product ID" value={String(generation.product_id)} />
-              <MetaItem label="Status" value={generation.status} />
-              <MetaItem
-                label="Provider Status"
-                value={generation.provider_status ?? "—"}
-              />
-              <MetaItem
-                label="Retry Count"
-                value={String(generation.retry_count)}
-              />
-              <MetaItem
-                label="Created"
-                value={formatDate(generation.created_at)}
-              />
-              <MetaItem
-                label="Updated"
-                value={formatDate(generation.updated_at)}
-              />
-            </dl>
-          </div>
-        </div>
-      </div>
+      {/* Cards */}
+      {generations.map((generation) => (
+        <GenerationCardItem key={generation.id} generation={generation} isPending={false} />
+      ))}
     </div>
   );
 }

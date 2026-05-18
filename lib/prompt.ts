@@ -59,7 +59,10 @@ export function buildPrompt(
 
     const toClean = attr.to.replace("#", "").toLowerCase();
     const toIdx = swatchIndexMap?.get(toClean);
-    const toRef = toIdx != null ? ` (use image ${toIdx} as the exact colour reference)` : "";
+    const toRef =
+      toIdx != null
+        ? ` (use image ${toIdx} as the exact colour reference)`
+        : "";
 
     let color: string;
     if (attr.from) {

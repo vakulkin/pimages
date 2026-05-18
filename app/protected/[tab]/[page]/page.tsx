@@ -10,6 +10,7 @@ import LogoutButton from "../../_components/LogoutButton";
 // import TestStorageDeleteButton from "../../_components/TestStorageDeleteButton";
 
 const TABLE_PAGE_SIZE = 25;
+const SINGLE_PAGE_SIZE = 5;
 
 async function AdminContent({
     params,
@@ -61,12 +62,14 @@ async function AdminContent({
         generations = (data as Generation[]) ?? [];
         total = count ?? 0;
     } else {
+        const from = page * SINGLE_PAGE_SIZE;
+        const to = from + SINGLE_PAGE_SIZE - 1;
         const { data, count } = await supabase
             .from("generations")
             .select("*", { count: "exact" })
             .in("status", statusFilter)
             .order("created_at", { ascending: true })
-            .range(page, page);
+            .range(from, to);
         generations = (data as Generation[]) ?? [];
         total = count ?? 0;
     }
@@ -85,10 +88,11 @@ async function AdminContent({
                 />
             ) : (
                 <GenerationCard
-                    generation={generations[0] ?? null}
+                    generations={generations}
                     tab={tab}
                     page={page}
                     total={total}
+                    pageSize={SINGLE_PAGE_SIZE}
                 />
             )}
         </>

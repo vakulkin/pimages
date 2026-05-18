@@ -23,7 +23,7 @@ export async function OPTIONS() {
 
 import { RequestBody, Attribute, Generation } from "@/lib/types";
 import { generateConfigHash } from "@/lib/utils";
-import { createGeminiImageTask } from "@/lib/piapi/gemini";
+import { createSeedreamImageTask } from "@/lib/piapi/seedream";
 import { buildPrompt, collectColorSwatches } from "@/lib/prompt";
 import { resolveColorInfo } from "@/lib/color-cache";
 
@@ -70,7 +70,9 @@ function validateAndNormalize(body: unknown): RequestBody {
   }
 
   const extraPrompt =
-    typeof b["extra_prompt"] === "string" ? (b["extra_prompt"] as string) : undefined;
+    typeof b["extra_prompt"] === "string"
+      ? (b["extra_prompt"] as string)
+      : undefined;
 
   return {
     product_id: pid as number,
@@ -163,7 +165,7 @@ async function submitToProvider(
   prompt: string,
   image_urls: string[],
 ): Promise<{ taskId: string }> {
-  const { taskId } = await createGeminiImageTask({
+  const { taskId } = await createSeedreamImageTask({
     prompt,
     image_urls,
     aspect_ratio: "1:1",
@@ -247,7 +249,9 @@ export async function POST(req: NextRequest) {
 
     // Resolve color info for each unique hex (DB cache → upload → API) in parallel
     const colorInfoEntries = await Promise.all(
-      hexes.map(async (hex) => [hex, await resolveColorInfo(hex, supabase!)] as const),
+      hexes.map(
+        async (hex) => [hex, await resolveColorInfo(hex, supabase!)] as const,
+      ),
     );
     const colorInfoMap = new Map(colorInfoEntries);
 
@@ -259,7 +263,12 @@ export async function POST(req: NextRequest) {
       hexes.map((hex, i) => [hex.replace("#", "").toLowerCase(), i + 2]),
     );
 
-    const prompt = buildPrompt(attributes, colorInfoMap, body.extra_prompt, swatchIndexMap);
+    const prompt = buildPrompt(
+      attributes,
+      colorInfoMap,
+      body.extra_prompt,
+      swatchIndexMap,
+    );
 
     const { taskId } = await submitToProvider(prompt, [image, ...swatchUrls]);
 
@@ -280,15 +289,28 @@ export async function POST(req: NextRequest) {
 
     // pgmq send returns setof bigint — unwrap the array, then persist in one update
     const resolvedMsgId = Array.isArray(msgId) ? msgId[0] : msgId;
-    await updateGenerationWithTask(supabase, generationId, taskId, resolvedMsgId ?? null);
+    await updateGenerationWithTask(
+      supabase,
+      generationId,
+      taskId,
+      resolvedMsgId ?? null,
+    );
 
     return NextResponse.json(
-      { id: generationId, status: "processing", product_id: product_id, hash: configHash },
+      {
+        id: generationId,
+        status: "processing",
+        product_id: product_id,
+        hash: configHash,
+      },
       { headers: corsHeaders() },
     );
   } catch (err: unknown) {
     if (err instanceof ApiError) {
-      return NextResponse.json({ error: err.message }, { status: err.status, headers: corsHeaders() });
+      return NextResponse.json(
+        { error: err.message },
+        { status: err.status, headers: corsHeaders() },
+      );
     }
 
     console.error("Unhandled error in /api/generate:", err);
