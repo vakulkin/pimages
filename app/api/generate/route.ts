@@ -23,10 +23,9 @@ export async function OPTIONS() {
 
 import { RequestBody, Attribute, Generation } from "@/lib/types";
 import { generateConfigHash } from "@/lib/utils";
-// import { createSeedreamImageTask } from "@/lib/piapi/seedream";
+import { createSeedreamImageTask } from "@/lib/piapi/seedream";
 import { buildPrompt, collectColorSwatches } from "@/lib/prompt";
 import { resolveColorInfo } from "@/lib/color-cache";
-import { createGeminiImageTask } from "@/lib/piapi/gemini";
 
 type SupabaseServerClient = ReturnType<typeof createServiceClient>;
 
@@ -166,7 +165,7 @@ async function submitToProvider(
   prompt: string,
   image_urls: string[],
 ): Promise<{ taskId: string }> {
-  const { taskId } = await createGeminiImageTask({
+  const { taskId } = await createSeedreamImageTask({
     prompt,
     image_urls,
     aspect_ratio: "1:1",
