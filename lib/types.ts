@@ -1,6 +1,5 @@
 export type Attribute = {
   target: string;
-  from?: string; // optional: if provided with `to`, renders as a gradient
   to: string;
   type?: "hex" | "text";
   material: string;

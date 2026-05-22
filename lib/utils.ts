@@ -18,7 +18,6 @@ function normalizeAttributes(attributes: Attribute[]) {
     .map((attr) => ({
       target: attr.target.trim().toLowerCase(),
       type: inferAttributeType(attr),
-      from: attr.from?.trim().toLowerCase() ?? null,
       to: attr.to.trim().toLowerCase(),
       material: attr.material.trim().toLowerCase(),
     }))

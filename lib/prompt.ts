@@ -55,17 +55,6 @@ export function validateAndNormalizeAttributes(input: unknown): Attribute[] {
       throw new Error(`attributes[${index}].to is required`);
     }
 
-    let from: string | undefined;
-    if (item.from != null) {
-      if (typeof item.from !== "string") {
-        throw new Error(`attributes[${index}].from must be a string when provided`);
-      }
-      const trimmed = item.from.trim();
-      if (trimmed) {
-        from = trimmed;
-      }
-    }
-
     let type: "hex" | "text";
     if (item.type == null || item.type === "") {
       type = inferAttributeType({ to });
@@ -84,16 +73,12 @@ export function validateAndNormalizeAttributes(input: unknown): Attribute[] {
       if (!normalizeHexColor(to)) {
         throw new Error(`attributes[${index}].to must be a valid hex color when type is \"hex\"`);
       }
-      if (from && !normalizeHexColor(from)) {
-        throw new Error(`attributes[${index}].from must be a valid hex color when type is \"hex\"`);
-      }
     }
 
     return {
       target,
       material,
       to,
-      ...(from ? { from } : {}),
       type,
     };
   });
@@ -106,7 +91,7 @@ function describeColorValue(
 ): string {
   if (type === "text") return value.trim();
   if (!isHexColor(value)) return value.trim();
-  if (swatchIdx != null) return `the color in image ${swatchIdx}`;
+  if (swatchIdx != null) return `the color in image ${swatchIdx} as the exact colour reference`;
   return "the provided color reference";
 }
 
@@ -126,13 +111,10 @@ export function collectColorSwatches(attributes: Attribute[]): {
       continue;
     }
 
-    for (const value of [attr.from, attr.to]) {
-      if (!value) continue;
-      const hex = normalizeHexColor(value);
-      if (hex && !seenSet.has(hex)) {
-        seenSet.add(hex);
-        seen.push(hex);
-      }
+    const hex = normalizeHexColor(attr.to);
+    if (hex && !seenSet.has(hex)) {
+      seenSet.add(hex);
+      seen.push(hex);
     }
   }
 
@@ -155,21 +137,8 @@ export function buildPrompt(
     const toHex = type === "hex" ? normalizeHexColor(attr.to) : null;
     const toIdx = toHex ? swatchIndexMap?.get(toHex) : undefined;
     const toDesc = describeColorValue(attr.to, type, toIdx);
-    const toRef = toIdx != null ? ` (use image ${toIdx} as the exact colour reference)` : "";
 
-    let color: string;
-    if (attr.from) {
-      const fromHex = type === "hex" ? normalizeHexColor(attr.from) : null;
-      const fromIdx = fromHex ? swatchIndexMap?.get(fromHex) : undefined;
-      const fromDesc = describeColorValue(attr.from, type, fromIdx);
-      const fromRef = fromIdx != null ? ` (image ${fromIdx})` : "";
-      const toRefGrad = toIdx != null ? ` (image ${toIdx})` : "";
-      color = `a gradient from ${fromDesc}${fromRef} to ${toDesc}${toRefGrad}`;
-    } else {
-      color = `${toDesc}${toRef}`;
-    }
-
-    return `${index + 1}. Change ${display} to ${color} (${attr.material.trim()}).`;
+    return `${index + 1}. Change ${display} to ${toDesc} (${attr.material.trim()}).`;
   });
 
   if (lines.length === 0) {
