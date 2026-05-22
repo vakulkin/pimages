@@ -159,11 +159,17 @@ export async function createAndSubmitGeneration(
     return swatchUrlMap.get(key)!;
   });
 
-  const swatchIndexMap = new Map(
-    hexes.map((hex, i) => [(normalizeHexColor(hex) ?? hex).toLowerCase(), i + 2]),
-  );
+  // Keep swatch indices aligned with attribute order (text attributes are undefined).
+  let swatchCursor = 0;
+  const swatchIndexByAttribute = attributes.map((attr) => {
+    if (attr.type !== "hex") {
+      return undefined;
+    }
+    swatchCursor += 1;
+    return swatchCursor + 1; // +1 for product image at index 1 in prompt terms
+  });
 
-  const prompt = buildPrompt(attributes, extra_prompt, swatchIndexMap);
+  const prompt = buildPrompt(attributes, extra_prompt, swatchIndexByAttribute);
 
   let taskId: string;
   try {

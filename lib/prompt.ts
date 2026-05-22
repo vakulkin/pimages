@@ -90,9 +90,13 @@ function describeColorValue(
   swatchIdx?: number,
 ): string {
   if (type === "text") return value.trim();
-  if (!isHexColor(value)) return value.trim();
+
+  const normalizedHex = normalizeHexColor(value);
+  if (!normalizedHex) return value.trim();
+
+  // Keep exactly one representation: image reference if available, else hex text.
   if (swatchIdx != null) return `the color in image ${swatchIdx} as the exact colour reference`;
-  return "the provided color reference";
+  return normalizedHex;
 }
 
 /**
@@ -103,8 +107,7 @@ function describeColorValue(
 export function collectColorSwatches(attributes: Attribute[]): {
   hexes: string[];
 } {
-  const seen: string[] = [];
-  const seenSet = new Set<string>();
+  const ordered: string[] = [];
 
   for (const attr of attributes) {
     if (inferAttributeType(attr) !== "hex") {
@@ -112,30 +115,27 @@ export function collectColorSwatches(attributes: Attribute[]): {
     }
 
     const hex = normalizeHexColor(attr.to);
-    if (hex && !seenSet.has(hex)) {
-      seenSet.add(hex);
-      seen.push(hex);
+    if (hex) {
+      ordered.push(hex);
     }
   }
 
-  return { hexes: seen };
+  return { hexes: ordered };
 }
 
 export function buildPrompt(
   attributes: Attribute[],
   extraPrompt?: string,
   /**
-   * Maps a canonical hex value (#rrggbb, lowercase) to the 1-based position of its swatch
-   * in the image_urls array sent to the model.
-   * e.g. { "#eeee22" => 2 } means the swatch is the second image.
+   * Per-attribute swatch index in the image_urls array sent to the model.
+   * Value is undefined for text attributes.
    */
-  swatchIndexMap?: Map<string, number>,
+  swatchIndexByAttribute?: Array<number | undefined>,
 ): string {
   const lines = attributes.map((attr, index) => {
     const type = inferAttributeType(attr);
     const display = attr.target.trim();
-    const toHex = type === "hex" ? normalizeHexColor(attr.to) : null;
-    const toIdx = toHex ? swatchIndexMap?.get(toHex) : undefined;
+    const toIdx = type === "hex" ? swatchIndexByAttribute?.[index] : undefined;
     const toDesc = describeColorValue(attr.to, type, toIdx);
 
     return `${index + 1}. Change ${display} to ${toDesc} (${attr.material.trim()}).`;
