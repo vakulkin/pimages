@@ -24,10 +24,9 @@ export function isHexColor(value: string): boolean {
 }
 
 export function inferAttributeType(attr: Pick<Attribute, "to" | "type">): "hex" | "text" {
-  if (attr.type === "hex" || attr.type === "text") {
-    return attr.type;
-  }
-  return isHexColor(attr.to) ? "hex" : "text";
+  const rawType = typeof attr.type === "string" ? attr.type.trim().toLowerCase() : "";
+  if (!rawType) return "hex";
+  return rawType === "text" ? "text" : "hex";
 }
 
 export function validateAndNormalizeAttributes(input: unknown): Attribute[] {
@@ -55,25 +54,11 @@ export function validateAndNormalizeAttributes(input: unknown): Attribute[] {
       throw new Error(`attributes[${index}].to is required`);
     }
 
-    let type: "hex" | "text";
-    if (item.type == null || item.type === "") {
-      type = inferAttributeType({ to });
-    } else {
-      if (typeof item.type !== "string") {
-        throw new Error(`attributes[${index}].type must be \"hex\" or \"text\"`);
-      }
-      const normalizedType = item.type.trim().toLowerCase();
-      if (normalizedType !== "hex" && normalizedType !== "text") {
-        throw new Error(`attributes[${index}].type must be \"hex\" or \"text\"`);
-      }
-      type = normalizedType;
+    if (typeof item.type !== "string" || !item.type.trim()) {
+      throw new Error(`attributes[${index}].type is required`);
     }
-
-    if (type === "hex") {
-      if (!normalizeHexColor(to)) {
-        throw new Error(`attributes[${index}].to must be a valid hex color when type is \"hex\"`);
-      }
-    }
+    const normalizedType = item.type.trim().toLowerCase() === "text" ? "text" : "hex";
+    const type = inferAttributeType({ to, type: normalizedType });
 
     return {
       target,
