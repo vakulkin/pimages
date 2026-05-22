@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Generation, Attribute } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
+import { inferAttributeType } from "@/lib/prompt";
 import { ImagePairFull } from "./ImagePair";
 import GenerationActions from "./GenerationActions";
 import ColorSwatch from "./ColorSwatch";
@@ -37,26 +38,44 @@ function MetaItem({
 }
 
 function AttributeRow({ attr }: { attr: Attribute }) {
+  const type = inferAttributeType(attr);
+
   return (
-    <tr className="align-top border-b border-gray-100 dark:border-gray-800">
+    <tr className="border-b border-gray-100 dark:border-gray-800">
       <td className="py-2 px-3 text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
         {attr.target}
       </td>
       <td className="py-2 px-3">
         <div className="flex items-center gap-1.5">
-          {attr.from && (
+          {type === "hex" ? (
             <>
-              <ColorSwatch color={attr.from} label={attr.from} />
-              <span className="text-gray-400 text-sm">→</span>
+              {attr.from && (
+                <>
+                  <ColorSwatch color={attr.from} label={attr.from} />
+                  <span className="text-gray-400 text-sm">→</span>
+                </>
+              )}
+              <ColorSwatch color={attr.to} label={attr.to} />
+            </>
+          ) : (
+            <>
+              {attr.from && (
+                <>
+                  <span className="text-xs text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">
+                    {attr.from}
+                  </span>
+                  <span className="text-gray-400 text-sm">→</span>
+                </>
+              )}
+              <span className="text-xs text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">
+                {attr.to}
+              </span>
             </>
           )}
-          <ColorSwatch color={attr.to} label={attr.to} />
         </div>
       </td>
-      <td className="py-2 px-3 text-xs">
-        <span className="text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+      <td className="py-2 px-3 text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
           {attr.material}
-        </span>
       </td>
     </tr>
   );

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Generation } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
+import { inferAttributeType } from "@/lib/prompt";
 import ColorSwatch from "./ColorSwatch";
 import StatusBadge from "./StatusBadge";
 import { ImagePairCompact } from "./ImagePair";
@@ -29,8 +30,26 @@ function GenerationRow({ gen }: { gen: Generation }) {
                 <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
                     {gen.attributes.map((attr, i) => (
                         <div key={i} className="flex items-center gap-0.5">
-                            {attr.from && <ColorSwatch color={attr.from} />}
-                            <ColorSwatch color={attr.to} />
+                            {inferAttributeType(attr) === "hex" ? (
+                                <>
+                                    {attr.from && <ColorSwatch color={attr.from} />}
+                                    <ColorSwatch color={attr.to} />
+                                </>
+                            ) : (
+                                <>
+                                    {attr.from && (
+                                        <>
+                                            <span className="text-[10px] text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">
+                                                {attr.from}
+                                            </span>
+                                            <span className="text-gray-400 text-xs">→</span>
+                                        </>
+                                    )}
+                                    <span className="text-[10px] text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">
+                                        {attr.to}
+                                    </span>
+                                </>
+                            )}
                             <span className="text-[10px] text-gray-400 ml-0.5 hidden sm:inline">{attr.target}</span>
                         </div>
                     ))}

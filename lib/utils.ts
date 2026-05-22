@@ -2,6 +2,7 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import crypto from "crypto";
 import { Attribute } from "./types";
+import { inferAttributeType } from "./prompt";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -16,6 +17,7 @@ function normalizeAttributes(attributes: Attribute[]) {
   return attributes
     .map((attr) => ({
       target: attr.target.trim().toLowerCase(),
+      type: inferAttributeType(attr),
       from: attr.from?.trim().toLowerCase() ?? null,
       to: attr.to.trim().toLowerCase(),
       material: attr.material.trim().toLowerCase(),

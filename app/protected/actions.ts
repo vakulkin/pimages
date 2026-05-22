@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { revalidatePath } from "next/cache";
+import { createAndSubmitGeneration } from "@/lib/generate-task";
 
 async function requireAuth() {
   const supabase = await createClient();
@@ -113,23 +114,13 @@ export async function regenerateGeneration(id: string, extraPrompt?: string) {
     // 2. Remove old row — archives queue msg, deletes storage, deletes DB row
     await removeGeneration(id);
 
-    // 3. Resubmit via the generate API (handles prompt, swatches, enqueue)
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/generate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        product_id: gen.product_id,
-        image: gen.source_image_url,
-        attributes: gen.attributes,
-        extra_prompt: extraPrompt,
-      }),
+    // 3. Resubmit directly (avoids fragile self-HTTP-fetch)
+    await createAndSubmitGeneration({
+      product_id: gen.product_id,
+      image: gen.source_image_url,
+      attributes: gen.attributes,
+      extra_prompt: extraPrompt,
     });
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Generate API error: ${text}`);
-    }
   } finally {
     revalidatePath("/protected");
   }
