@@ -1,7 +1,7 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import { Attribute, Generation } from "@/lib/types";
 import { generateConfigHash } from "@/lib/utils";
-import { createSeedreamImageTask } from "@/lib/piapi/seedream";
+// import { createSeedreamImageTask } from "@/lib/piapi/seedream";
 import {
   buildPrompt,
   collectColorSwatches,
@@ -9,6 +9,7 @@ import {
   validateAndNormalizeAttributes,
 } from "@/lib/prompt";
 import { resolveColorInfo } from "@/lib/color-cache";
+import { createGeminiImageTask } from "./piapi/gemini";
 
 type SupabaseServiceClient = ReturnType<typeof createServiceClient>;
 
@@ -166,7 +167,8 @@ export async function createAndSubmitGeneration(
 
   let taskId: string;
   try {
-    ({ taskId } = await createSeedreamImageTask({
+    ({ taskId } = await createGeminiImageTask({
+    // ({ taskId } = await createSeedreamImageTask({
       prompt,
       image_urls: [image, ...swatchUrls],
       aspect_ratio: "1:1",
