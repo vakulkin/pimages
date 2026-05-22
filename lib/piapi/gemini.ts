@@ -17,7 +17,8 @@ export async function createGeminiImageTask(
     },
     body: JSON.stringify({
       model: "gemini",
-      task_type: "gemini-2.5-flash-image",
+      task_type: "nano-banana-2",
+      // task_type: "gemini-2.5-flash-image",
       input: {
         prompt: input.prompt,
         image_urls: input.image_urls ?? [],
