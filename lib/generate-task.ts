@@ -25,7 +25,6 @@ export type GenerateTaskResult = {
   product_id: number;
   hash: string;
   image_url?: string;
-  /** Returned when an existing matching generation was found (no new task created). */
   existing?: true;
 };
 
@@ -172,7 +171,7 @@ export async function createAndSubmitGeneration(
   let taskId: string;
   try {
     ({ taskId } = await createGeminiImageTask({
-    // ({ taskId } = await createSeedreamImageTask({
+      // ({ taskId } = await createSeedreamImageTask({
       prompt,
       image_urls: [image, ...swatchUrls],
       aspect_ratio: "1:1",
