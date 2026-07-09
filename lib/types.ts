@@ -1,4 +1,5 @@
 export type Attribute = {
+  slug: string;
   target: string;
   to: string;
   type?: "hex" | "text";
@@ -14,12 +15,12 @@ export type Generation = {
   provider_job_id?: string;
   provider_status?: string;
   status:
-    | "queued"
-    | "processing"
-    | "completed"
-    | "accepted"
-    | "rejected"
-    | "failed";
+  | "queued"
+  | "processing"
+  | "completed"
+  | "accepted"
+  | "rejected"
+  | "failed";
   image_url?: string;
   retry_count: number;
   queue_msg_id?: number | null;
@@ -46,15 +47,15 @@ export type SeedreamTaskInput = {
   prompt: string;
   image_urls?: string[];
   aspect_ratio?:
-    | "1:1"
-    | "16:9"
-    | "9:16"
-    | "4:3"
-    | "3:4"
-    | "3:2"
-    | "2:3"
-    | "4:5"
-    | "5:4";
+  | "1:1"
+  | "16:9"
+  | "9:16"
+  | "4:3"
+  | "3:4"
+  | "3:2"
+  | "2:3"
+  | "4:5"
+  | "5:4";
   output_format?: "png" | "jpeg";
   size?: "2K" | "3K";
 };

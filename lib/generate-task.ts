@@ -6,7 +6,6 @@ import {
   buildPrompt,
   collectColorSwatches,
   normalizeHexColor,
-  validateAndNormalizeAttributes,
 } from "@/lib/prompt";
 import { resolveColorInfo } from "@/lib/color-cache";
 import { createGeminiImageTask } from "./piapi/gemini";
@@ -118,8 +117,7 @@ async function markGenerationFailed(
 export async function createAndSubmitGeneration(
   input: GenerateTaskInput,
 ): Promise<GenerateTaskResult> {
-  const { product_id, image, extra_prompt } = input;
-  const attributes = validateAndNormalizeAttributes(input.attributes);
+  const { product_id, image, extra_prompt, attributes } = input;
   const supabase = createServiceClient();
 
   const configHash = generateConfigHash(product_id, image, attributes);

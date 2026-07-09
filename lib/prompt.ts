@@ -40,10 +40,14 @@ export function validateAndNormalizeAttributes(input: unknown): Attribute[] {
     }
 
     const item = raw as Record<string, unknown>;
+    const slug = typeof item.slug === "string" ? item.slug.trim() : "";
     const target = typeof item.target === "string" ? item.target.trim() : "";
     const material = typeof item.material === "string" ? item.material.trim() : "";
     const to = typeof item.to === "string" ? item.to.trim() : "";
 
+    if (!slug) {
+      throw new Error(`attributes[${index}].slug is required`);
+    }
     if (!target) {
       throw new Error(`attributes[${index}].target is required`);
     }
@@ -61,6 +65,7 @@ export function validateAndNormalizeAttributes(input: unknown): Attribute[] {
     const type = inferAttributeType({ to, type: normalizedType });
 
     return {
+      slug,
       target,
       material,
       to,
@@ -138,7 +143,7 @@ export function buildPrompt(
     ...lines,
     "",
     "Preserve all perforation holes, cut-outs, and openings exactly as in the original" +
-      " — keep them open and show the original background through them.",
+    " — keep them open and show the original background through them.",
     "",
     "Preserve all shading, lighting, shadows, highlights, reflections, textures, and material realism.",
     "Preserve all shapes, proportions, composition, and image quality.",
